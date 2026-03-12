@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FundChain — Decentralized Crowdfunding</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080b08;
+      --surface: #0e130e;
+      --surface2: #141a14;
+      --border: #1f2b1f;
+      --green: #00ff41;
+      --green-dim: #00c832;
+      --green-muted: rgba(0,255,65,0.08);
+      --text: #e8f5e8;
+      --text-dim: #6b8f6b;
+      --text-muted: #3d5c3d;
+      --red: #ff4141;
+      --yellow: #ffd700;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* Grid background */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,255,65,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,65,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(8,11,8,0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: var(--green);
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo-dot {
+      width: 8px; height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .network-badge {
+      font-size: 0.65rem;
+      color: var(--green-dim);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: none;
+      padding: 10px 20px;
+      transition: all 0.15s;
+    }
+
+    .btn-primary {
+      background: var(--green);
+      color: #000;
+      font-weight: 700;
+    }
+
+    .btn-primary:hover {
+      background: #fff;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 var(--green);
+    }
+
+    .btn-primary:active { transform: translate(0,0); box-shadow: none; }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--green);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--green);
+      background: var(--green-muted);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      font-size: 0.7rem;
+    }
+
+    .btn-ghost:hover { border-color: var(--text-dim); color: var(--text); }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    /* MAIN */
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+    }
+
+    /* HERO */
+    .hero {
+      margin-bottom: 4rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 3rem;
+    }
+
+    .hero-label {
+      font-size: 0.65rem;
+      color: var(--green);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      margin-bottom: 1.5rem;
+    }
+
+    h1 span {
+      color: var(--green);
+      display: inline-block;
+    }
+
+    .hero-desc {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      line-height: 1.8;
+      max-width: 500px;
+      margin-bottom: 2rem;
+    }
+
+    .stats-row {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    .stat-label {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    /* SECTION HEADER */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 20px; height: 1px;
+      background: var(--green);
+    }
+
+    /* CAMPAIGNS GRID */
+    .campaigns-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-bottom: 4rem;
+    }
+
+    .campaign-card {
+      background: var(--surface);
+      padding: 1.5rem;
+      transition: background 0.15s;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .campaign-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 0;
+      background: var(--green);
+      transition: height 0.2s;
+    }
+
+    .campaign-card:hover { background: var(--surface2); }
+    .campaign-card:hover::before { height: 100%; }
+
+    .card-id {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      letter-spacing: 0.15em;
+      margin-bottom: 0.75rem;
+    }
+
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 1rem;
+      line-height: 1.3;
+    }
+
+    .progress-wrap {
+      margin-bottom: 1rem;
+    }
+
+    .progress-bar {
+      height: 3px;
+      background: var(--border);
+      margin-bottom: 0.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--green);
+      transition: width 0.6s ease;
+      position: relative;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      right: 0; top: 0;
+      width: 4px; height: 100%;
+      background: #fff;
+      animation: scan 1.5s ease infinite;
+    }
+
+    @keyframes scan {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .progress-nums {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.65rem;
+      color: var(--text-dim);
+    }
+
+    .progress-nums strong { color: var(--green); }
+
+    .card-meta {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .meta-val {
+      font-size: 0.75rem;
+      color: var(--text);
+    }
+
+    .meta-key {
+      font-size: 0.55rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .card-actions .btn { flex: 1; font-size: 0.65rem; padding: 8px 12px; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border: 1px solid;
+      margin-bottom: 0.75rem;
+    }
+
+    .status-active { color: var(--green); border-color: rgba(0,255,65,0.3); }
+    .status-ended { color: var(--text-muted); border-color: var(--border); }
+    .status-success { color: var(--yellow); border-color: rgba(255,215,0,0.3); }
+
+    .status-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status-active .status-dot { animation: pulse 1.5s infinite; }
+
+    /* EMPTY STATE */
+    .empty-state {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 4rem 2rem;
+      text-align: center;
+      grid-column: 1/-1;
+    }
+
+    .empty-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      opacity: 0.3;
+    }
+
+    .empty-text {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* LOADING */
+    .loading-state {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 3rem;
+      text-align: center;
+      grid-column: 1/-1;
+    }
+
+    .loader {
+      display: inline-block;
+      width: 24px; height: 24px;
+      border: 2px solid var(--border);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 1rem;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      backdrop-filter: blur(4px);
+      animation: fadeIn 0.15s ease;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      width: 100%;
+      max-width: 480px;
+      animation: slideUp 0.2s ease;
+      position: relative;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      padding: 0;
+      transition: color 0.15s;
+    }
+
+    .modal-close:hover { color: var(--text); }
+
+    .modal-body { padding: 1.5rem; }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.8rem;
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color 0.15s;
+      -webkit-appearance: none;
+    }
+
+    input:focus { border-color: var(--green); }
+    input::placeholder { color: var(--text-muted); }
+
+    .input-hint {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+    }
+
+    .modal-footer {
+      padding: 1.25rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+
+    /* TOAST */
+    .toast-container {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .toast {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      font-size: 0.7rem;
+      max-width: 320px;
+      animation: toastIn 0.2s ease;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      border-left: 3px solid var(--green);
+    }
+
+    .toast.error { border-left-color: var(--red); }
+    .toast.warning { border-left-color: var(--yellow); }
+
+    @keyframes toastIn {
+      from { transform: translateX(20px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .toast-icon { font-size: 0.9rem; flex-shrink: 0; margin-top: 1px; }
+    .toast-msg { color: var(--text-dim); line-height: 1.5; }
+    .toast-msg strong { color: var(--text); display: block; margin-bottom: 2px; }
+
+    /* TERMINAL LINE */
+    .terminal-line {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      padding: 0.75rem 1.5rem;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .terminal-line::before {
+      content: '>';
+      color: var(--green);
+    }
+
+    /* CONTRIBUTE DETAIL */
+    .campaign-detail {
+      margin-bottom: 1rem;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.72rem;
+    }
+
+    .detail-row:last-child { border-bottom: none; }
+    .detail-key { color: var(--text-muted); }
+    .detail-val { color: var(--text); font-weight: 700; }
+    .detail-val.green { color: var(--green); }
+
+    /* ADDRESS */
+    .address {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      word-break: break-all;
+    }
+
+    /* FOOTER */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: gap;
+    }
+
+    .footer-text {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+    }
+
+    .footer-contract {
+      font-size: 0.55rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .footer-contract a {
+      color: var(--green-dim);
+      text-decoration: none;
+    }
+
+    .footer-contract a:hover { color: var(--green); }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 2.2rem; }
+      .stats-row { gap: 1.25rem; }
+      main { padding: 2rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo">
+      <div class="logo-dot"></div>
+      FundChain
+    </div>
+    <div class="nav-right">
+      <div class="network-badge">⬡ Sepolia</div>
+      <button class="btn btn-primary" onclick="openCreateModal()">+ New Campaign</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-label">// Decentralized Crowdfunding Protocol</div>
+      <h1>Fund ideas.<br><span>On-chain.</span></h1>
+      <p class="hero-desc">
+        Trustless crowdfunding on Ethereum Sepolia. Create campaigns,
+        contribute ETH, and withdraw only when goals are met — all enforced by smart contract.
+      </p>
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-value" id="stat-campaigns">—</div>
+          <div class="stat-label">Campaigns</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="stat-eth">—</div>
+          <div class="stat-label">ETH raised</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">Sepolia</div>
+          <div class="stat-label">Network</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CAMPAIGNS -->
+    <section>
+      <div class="section-header">
+        <div class="section-title">Active Campaigns</div>
+        <button class="btn btn-ghost" onclick="loadCampaigns()">↻ Refresh</button>
+      </div>
+      <div class="campaigns-grid" id="campaigns-grid">
+        <div class="loading-state">
+          <div class="loader"></div>
+          <div class="loading-text">Fetching on-chain data...</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-text">Built on Ethereum · Solidity 0.8.28 · Sepolia Testnet</div>
+    <div class="footer-contract">
+      Contract:
+      <a href="https://sepolia.etherscan.io/address/0x189ab20b1993166d1c498c5acafa396658d2fea5" target="_blank">
+        0x189ab...fea5 ↗
+      </a>
+    </div>
+  </footer>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- CREATE MODAL -->
+  <div class="modal-overlay" id="create-modal" style="display:none" onclick="handleOverlayClick(event, 'create-modal')">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">New Campaign</div>
+        <button class="modal-close" onclick="closeModal('create-modal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Campaign Title</label>
+          <input type="text" id="create-title" placeholder="e.g. Build a community garden" maxlength="80"/>
+        </div>
+        <div class="form-group">
+          <label>Goal Amount (ETH)</label>
+          <input type="number" id="create-goal" placeholder="0.05" min="0.001" step="0.001"/>
+          <div class="input-hint">Minimum contribution required to succeed</div>
+        </div>
+        <div class="form-group">
+          <label>Duration (Days)</label>
+          <input type="number" id="create-duration" placeholder="30" min="1" max="365"/>
+          <div class="input-hint">Campaign deadline from now</div>
+        </div>
+      </div>
+      <div class="terminal-line" id="create-status">Ready to deploy transaction</div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('create-modal')">Cancel</button>
+        <button class="btn btn-primary" id="create-btn" onclick="createCampaign()">Deploy Campaign →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTRIBUTE MODAL -->
+  <div class="modal-overlay" id="contribute-modal" style="display:none" onclick="handleOverlayClick(event, 'contribute-modal')">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">Contribute ETH</div>
+        <button class="modal-close" onclick="closeModal('contribute-modal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="campaign-detail" id="contribute-detail"></div>
+        <div class="form-group">
+          <label>Amount (ETH)</label>
+          <input type="number" id="contribute-amount" placeholder="0.01" min="0.001" step="0.001"/>
+          <div class="input-hint">Amount will be sent to the smart contract</div>
+        </div>
+      </div>
+      <div class="terminal-line" id="contribute-status">Ready to send transaction</div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('contribute-modal')">Cancel</button>
+        <button class="btn btn-primary" id="contribute-btn" onclick="submitContribute()">Send ETH →</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = 'http://localhost:3001/api';
+    let activeCampaignId = null;
+
+    // ─── UTILS ─────────────────────────────────────────────────
+    function weiToEth(wei) {
+      return (Number(BigInt(wei)) / 1e18).toFixed(4);
+    }
+
+    function formatDeadline(ts) {
+      const d = new Date(Number(ts) * 1000);
+      const now = Date.now();
+      const diff = d - now;
+      if (diff < 0) return 'Ended';
+      const days = Math.floor(diff / 86400000);
+      if (days > 0) return `${days}d remaining`;
+      const hrs = Math.floor(diff / 3600000);
+      return `${hrs}h remaining`;
+    }
+
+    function isActive(deadline) {
+      return Date.now() < Number(deadline) * 1000;
+    }
+
+    function pct(raised, goal) {
+      if (goal === '0') return 0;
+      return Math.min(100, Math.round((Number(raised) / Number(goal)) * 100));
+    }
+
+    function shortAddr(addr) {
+      return addr.slice(0,6) + '...' + addr.slice(-4);
+    }
+
+    // ─── TOAST ──────────────────────────────────────────────────
+    function toast(title, msg = '', type = 'success') {
+      const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : '⚠';
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.innerHTML = `<div class="toast-icon">${icon}</div><div class="toast-msg"><strong>${title}</strong>${msg}</div>`;
+      document.getElementById('toast-container').appendChild(el);
+      setTimeout(() => el.remove(), 5000);
+    }
+
+    // ─── MODAL ──────────────────────────────────────────────────
+    function openCreateModal() {
+      document.getElementById('create-modal').style.display = 'flex';
+      document.getElementById('create-status').textContent = 'Ready to deploy transaction';
+      document.getElementById('create-title').value = '';
+      document.getElementById('create-goal').value = '';
+      document.getElementById('create-duration').value = '';
+      document.getElementById('create-btn').disabled = false;
+    }
+
+    function openContributeModal(id, campaign) {
+      activeCampaignId = id;
+      const p = pct(campaign.amountRaised, campaign.goal);
+      document.getElementById('contribute-detail').innerHTML = `
+        <div class="detail-row"><span class="detail-key">Campaign</span><span class="detail-val">${campaign.title}</span></div>
+        <div class="detail-row"><span class="detail-key">Goal</span><span class="detail-val green">${weiToEth(campaign.goal)} ETH</span></div>
+        <div class="detail-row"><span class="detail-key">Raised</span><span class="detail-val">${weiToEth(campaign.amountRaised)} ETH (${p}%)</span></div>
+        <div class="detail-row"><span class="detail-key">Deadline</span><span class="detail-val">${formatDeadline(campaign.deadline)}</span></div>
+      `;
+      document.getElementById('contribute-amount').value = '';
+      document.getElementById('contribute-status').textContent = 'Ready to send transaction';
+      document.getElementById('contribute-btn').disabled = false;
+      document.getElementById('contribute-modal').style.display = 'flex';
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+
+    function handleOverlayClick(e, id) {
+      if (e.target === document.getElementById(id)) closeModal(id);
+    }
+
+    // ─── LOAD CAMPAIGNS ─────────────────────────────────────────
+    async function loadCampaigns() {
+      const grid = document.getElementById('campaigns-grid');
+      grid.innerHTML = `<div class="loading-state"><div class="loader"></div><div class="loading-text">Fetching on-chain data...</div></div>`;
+
+      try {
+        const res = await fetch(`${API}/campaigns`);
+        const data = await res.json();
+
+        if (!data.success) throw new Error(data.error);
+
+        const campaigns = data.campaigns;
+
+        // Update stats
+        document.getElementById('stat-campaigns').textContent = campaigns.length;
+        const totalEth = campaigns.reduce((sum, c) => sum + Number(c.amountRaised), 0);
+        document.getElementById('stat-eth').textContent = (totalEth / 1e18).toFixed(4);
+
+        if (campaigns.length === 0) {
+          grid.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">◈</div>
+              <div class="empty-text">No campaigns yet. Create the first one.</div>
+            </div>`;
+          return;
+        }
+
+        grid.innerHTML = campaigns.map(c => {
+          const p = pct(c.amountRaised, c.goal);
+          const active = isActive(c.deadline);
+          const goalMet = Number(c.amountRaised) >= Number(c.goal);
+
+          let statusHtml;
+          if (c.withdrawn) {
+            statusHtml = `<div class="status-badge status-success"><div class="status-dot"></div>Funded & Withdrawn</div>`;
+          } else if (!active) {
+            statusHtml = `<div class="status-badge status-ended"><div class="status-dot"></div>Ended</div>`;
+          } else {
+            statusHtml = `<div class="status-badge status-active"><div class="status-dot"></div>Active</div>`;
+          }
+
+          return `
+            <div class="campaign-card">
+              <div class="card-id">CAMPAIGN #${c.id}</div>
+              ${statusHtml}
+              <div class="card-title">${escHtml(c.title)}</div>
+              <div class="progress-wrap">
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width:${p}%"></div>
+                </div>
+                <div class="progress-nums">
+                  <span><strong>${weiToEth(c.amountRaised)} ETH</strong> raised</span>
+                  <span>${p}% of ${weiToEth(c.goal)} ETH</span>
+                </div>
+              </div>
+              <div class="card-meta">
+                <div class="meta-item">
+                  <div class="meta-val">${formatDeadline(c.deadline)}</div>
+                  <div class="meta-key">Deadline</div>
+                </div>
+                <div class="meta-item">
+                  <div class="meta-val">${shortAddr(c.owner)}</div>
+                  <div class="meta-key">Owner</div>
+                </div>
+              </div>
+              <div class="card-actions">
+                ${active && !c.withdrawn
+                  ? `<button class="btn btn-primary" onclick='handleContribute(${c.id}, ${JSON.stringify(c)})'>Contribute</button>`
+                  : `<button class="btn btn-ghost" disabled>Closed</button>`
+                }
+                <a href="https://sepolia.etherscan.io/address/0x189ab20b1993166d1c498c5acafa396658d2fea5" target="_blank">
+                  <button class="btn btn-ghost" style="width:100%">Etherscan ↗</button>
+                </a>
+              </div>
+            </div>`;
+        }).join('');
+
+      } catch (err) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon" style="color:var(--red)">✕</div>
+            <div class="empty-text" style="color:var(--red)">Failed to load: ${err.message}<br><br>
+            <span style="color:var(--text-muted)">Make sure the backend is running on port 3001</span></div>
+          </div>`;
+        console.error(err);
+      }
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function handleContribute(id, campaign) {
+      openContributeModal(id, campaign);
+    }
+
+    // ─── CREATE CAMPAIGN ─────────────────────────────────────────
+    async function createCampaign() {
+      const title = document.getElementById('create-title').value.trim();
+      const goal = document.getElementById('create-goal').value;
+      const duration = document.getElementById('create-duration').value;
+
+      if (!title || !goal || !duration) {
+        toast('Missing fields', 'Please fill in all fields', 'warning');
+        return;
+      }
+
+      const btn = document.getElementById('create-btn');
+      const status = document.getElementById('create-status');
+      btn.disabled = true;
+      status.textContent = 'Sending transaction to Sepolia...';
+
+      try {
+        const res = await fetch(`${API}/campaigns`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, goalInEth: goal, durationInDays: parseInt(duration) })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        status.textContent = `✓ Confirmed in block ${data.blockNumber}`;
+        toast('Campaign created!', `TX: ${data.transactionHash.slice(0,20)}...`);
+        setTimeout(() => {
+          closeModal('create-modal');
+          loadCampaigns();
+        }, 1500);
+
+      } catch (err) {
+        status.textContent = `✕ Error: ${err.message.slice(0, 60)}`;
+        btn.disabled = false;
+        toast('Transaction failed', err.message.slice(0, 80), 'error');
+      }
+    }
+
+    // ─── CONTRIBUTE ──────────────────────────────────────────────
+    async function submitContribute() {
+      const amount = document.getElementById('contribute-amount').value;
+      if (!amount || Number(amount) <= 0) {
+        toast('Invalid amount', 'Enter a valid ETH amount', 'warning');
+        return;
+      }
+
+      const btn = document.getElementById('contribute-btn');
+      const status = document.getElementById('contribute-status');
+      btn.disabled = true;
+      status.textContent = 'Sending ETH to contract...';
+
+      try {
+        const res = await fetch(`${API}/campaigns/${activeCampaignId}/contribute`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amountInEth: amount })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        status.textContent = `✓ Confirmed in block ${data.blockNumber}`;
+        toast('Contribution sent!', `${amount} ETH · TX: ${data.transactionHash.slice(0,20)}...`);
+        setTimeout(() => {
+          closeModal('contribute-modal');
+          loadCampaigns();
+        }, 1500);
+
+      } catch (err) {
+        status.textContent = `✕ Error: ${err.message.slice(0, 60)}`;
+        btn.disabled = false;
+        toast('Transaction failed', err.message.slice(0, 80), 'error');
+      }
+    }
+
+    // ─── INIT ────────────────────────────────────────────────────
+    loadCampaigns();
+  </script>
+</body>
+</html>
